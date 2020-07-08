@@ -8,6 +8,7 @@ import torch
 class BaseClassifier(torch.nn.Module):
     """ Abstract class for classifiers.
     """
+
     def __init__(self, **kwargs):
         super(BaseClassifier, self).__init__()
         # initialize and use later
@@ -21,19 +22,19 @@ class BaseClassifier(torch.nn.Module):
 
     def on_iteration_end(self, info, batch_labels, partition, **kwargs):
         self._current_iteration[partition] += 1
-        pred = utils.to_numpy(info['pred']).argmax(axis=1).astype(np.int)
+        pred = utils.to_numpy(info["pred"]).argmax(axis=1).astype(np.int)
         batch_labels = utils.to_numpy(batch_labels[0]).astype(np.int)
         self._accuracy[partition].append((pred == batch_labels).astype(np.float).mean())
 
     def on_epoch_end(self, partition, tensorboard, epoch, **kwargs):
         accuracy = np.mean(self._accuracy[partition])
-        if partition == 'val':
+        if partition == "val":
             if accuracy > self._best_val_accuracy:
                 self._best_val_accuracy = accuracy
                 self._is_best_so_far = True
             else:
                 self._is_best_so_far = False
-        tensorboard.add_scalar('metrics/{}_accuracy'.format(partition), accuracy, epoch)
+        tensorboard.add_scalar("metrics/{}_accuracy".format(partition), accuracy, epoch)
 
     def is_best_val_result(self, **kwargs):
         return self._is_best_so_far, self._best_val_accuracy
@@ -47,29 +48,43 @@ class BaseClassifier(torch.nn.Module):
     def compute_loss(self, *input, **kwargs):
         raise NotImplementedError()
 
-    def visualize(self, train_loader, val_loader, tensorboard=None, epoch=None, **kwargs):
+    def visualize(
+        self, train_loader, val_loader, tensorboard=None, epoch=None, **kwargs
+    ):
         visualizations = {}
 
         # gradient norm tensorboard histograms
         if tensorboard is not None:
-            vis.ce_gradient_norm_histogram(self, train_loader, tensorboard, epoch, name='train-ce-grad')
+            vis.ce_gradient_norm_histogram(
+                self, train_loader, tensorboard, epoch, name="train-ce-grad"
+            )
             if val_loader is not None:
-                vis.ce_gradient_norm_histogram(self, val_loader, tensorboard, epoch, name='val-ce-grad')
+                vis.ce_gradient_norm_histogram(
+                    self, val_loader, tensorboard, epoch, name="val-ce-grad"
+                )
 
         # add gradient pair plots
-        if train_loader.dataset.dataset_name == 'mnist':
+        if train_loader.dataset.dataset_name == "mnist":
             for p in [(0, 1), (4, 9)]:
-                fig, _ = vis.ce_gradient_pair_scatter(self, train_loader, d1=p[0], d2=p[1])
-                visualizations['gradients/train-ce-scatter-{}-{}'.format(p[0], p[1])] = fig
+                fig, _ = vis.ce_gradient_pair_scatter(
+                    self, train_loader, d1=p[0], d2=p[1]
+                )
+                visualizations[
+                    "gradients/train-ce-scatter-{}-{}".format(p[0], p[1])
+                ] = fig
                 if val_loader is not None:
-                    fig, _ = vis.ce_gradient_pair_scatter(self, val_loader, d1=p[0], d2=p[1])
-                    visualizations['gradients/val-ce-scatter-{}-{}'.format(p[0], p[1])] = fig
+                    fig, _ = vis.ce_gradient_pair_scatter(
+                        self, val_loader, d1=p[0], d2=p[1]
+                    )
+                    visualizations[
+                        "gradients/val-ce-scatter-{}-{}".format(p[0], p[1])
+                    ] = fig
 
         # visualize pred
-        fig, _ = vis.plot_predictions(self, train_loader, key='pred')
-        visualizations['predictions/pred-train'] = fig
+        fig, _ = vis.plot_predictions(self, train_loader, key="pred")
+        visualizations["predictions/pred-train"] = fig
         if val_loader is not None:
-            fig, _ = vis.plot_predictions(self, val_loader, key='pred')
-            visualizations['predictions/pred-val'] = fig
+            fig, _ = vis.plot_predictions(self, val_loader, key="pred")
+            visualizations["predictions/pred-val"] = fig
 
         return visualizations

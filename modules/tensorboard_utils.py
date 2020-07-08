@@ -21,16 +21,32 @@ def extract_tag_from_tensorboard(tb_events_file, tag):
     return ret_events
 
 
-def plot_from_tensorboard(plt, files, common_prefix=None, savename=None, xmin=None, xmax=None, ymin=None, ymax=None,
-                          legend_args=None, xlabel='Epochs', ylabel='Accuracy', title=None, smoothing=False,
-                          tag='metrics/train_accuracy', figsize=(9, 4), xticks=None, yticks=None,
-                          linewidth=None):
+def plot_from_tensorboard(
+    plt,
+    files,
+    common_prefix=None,
+    savename=None,
+    xmin=None,
+    xmax=None,
+    ymin=None,
+    ymax=None,
+    legend_args=None,
+    xlabel="Epochs",
+    ylabel="Accuracy",
+    title=None,
+    smoothing=False,
+    tag="metrics/train_accuracy",
+    figsize=(9, 4),
+    xticks=None,
+    yticks=None,
+    linewidth=None,
+):
     """ Plots a given tag from multiple tensorboard log files.
     :param files: list of dictionaries, that have keys 'name', 'dir_path', ['marker'], ['markevery']
     """
     fig, ax = plt.subplots(figsize=figsize)
     for d in files:
-        dir_path = d['dir_path']
+        dir_path = d["dir_path"]
         if common_prefix is not None:
             dir_path = os.path.join(common_prefix, dir_path)
 
@@ -41,11 +57,18 @@ def plot_from_tensorboard(plt, files, common_prefix=None, savename=None, xmin=No
         values = [p[1] for p in events]
         if smoothing:
             values = gaussian_filter1d(values, sigma=2)
-        ax.plot(steps, values, label=d['name'], color=d.get('color', None),
-                linestyle=d.get('linestyle', '-'), marker=d.get('marker', None),
-                markevery=d.get('markevery', None), linewidth=linewidth)
+        ax.plot(
+            steps,
+            values,
+            label=d["name"],
+            color=d.get("color", None),
+            linestyle=d.get("linestyle", "-"),
+            marker=d.get("marker", None),
+            markevery=d.get("markevery", None),
+            linewidth=linewidth,
+        )
 
-    plt.grid(color='gray', linestyle='--', linewidth=0.5, alpha=0.3)
+    plt.grid(color="gray", linestyle="--", linewidth=0.5, alpha=0.3)
 
     if legend_args is not None:
         ax.legend(**legend_args)

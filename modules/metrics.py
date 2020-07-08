@@ -30,7 +30,7 @@ class Metric(ABC):
 
 
 class Accuracy(Metric):
-    def __init__(self, output_key: str = 'pred', **kwargs):
+    def __init__(self, output_key: str = "pred", **kwargs):
         super(Accuracy, self).__init__(**kwargs)
         self.output_key = output_key
 
@@ -56,11 +56,13 @@ class Accuracy(Metric):
     def on_iteration_end(self, info, batch_labels, partition, **kwargs):
         pred = utils.to_numpy(info[self.output_key]).argmax(axis=1).astype(np.int)
         batch_labels = utils.to_numpy(batch_labels[0]).astype(np.int)
-        self._accuracy_storage[partition].append((pred == batch_labels).astype(np.float).mean())
+        self._accuracy_storage[partition].append(
+            (pred == batch_labels).astype(np.float).mean()
+        )
 
 
 class TopKAccuracy(Metric):
-    def __init__(self, k, output_key: str = 'pred', **kwargs):
+    def __init__(self, k, output_key: str = "pred", **kwargs):
         super(TopKAccuracy, self).__init__(**kwargs)
         self.k = k
         self.output_key = output_key
@@ -87,8 +89,10 @@ class TopKAccuracy(Metric):
         pred = utils.to_numpy(info[self.output_key])
         batch_labels = utils.to_numpy(batch_labels[0]).astype(np.int)
 
-        topk_predictions = np.argsort(-pred, axis=1)[:, :self.k]
+        topk_predictions = np.argsort(-pred, axis=1)[:, : self.k]
         batch_labels = batch_labels.reshape((-1, 1)).repeat(self.k, axis=1)
-        topk_correctness = (np.sum(topk_predictions == batch_labels, axis=1) >= 1)
+        topk_correctness = np.sum(topk_predictions == batch_labels, axis=1) >= 1
 
-        self._accuracy_storage[partition].append(topk_correctness.astype(np.float).mean())
+        self._accuracy_storage[partition].append(
+            topk_correctness.astype(np.float).mean()
+        )

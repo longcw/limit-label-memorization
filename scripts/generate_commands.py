@@ -3,7 +3,9 @@ import sys
 import random
 
 
-def merge_commands(commands, gpu_cnt=10, max_job_cnt=10000, shuffle=True, put_device_id=False):
+def merge_commands(
+    commands, gpu_cnt=10, max_job_cnt=10000, shuffle=True, put_device_id=False
+):
     sys.stderr.write(f"Created {len(commands)} commands")
     if len(commands) == 0:
         return
@@ -16,7 +18,9 @@ def merge_commands(commands, gpu_cnt=10, max_job_cnt=10000, shuffle=True, put_de
         end = min(len(commands), idx + merge_cnt)
         concatenated_commands = "; ".join(commands[idx:end])
         if put_device_id:
-            concatenated_commands = concatenated_commands.replace('cuda', f'cuda:{current_device_idx}')
+            concatenated_commands = concatenated_commands.replace(
+                "cuda", f"cuda:{current_device_idx}"
+            )
         print(concatenated_commands)
         current_device_idx += 1
         current_device_idx %= gpu_cnt
@@ -24,12 +28,12 @@ def merge_commands(commands, gpu_cnt=10, max_job_cnt=10000, shuffle=True, put_de
 
 def check_exists(logdir):
     root_dir = os.path.dirname(os.path.abspath(__file__))
-    return os.path.exists(os.path.join(root_dir, '../', logdir, 'test_accuracy.txt'))
+    return os.path.exists(os.path.join(root_dir, "../", logdir, "test_accuracy.txt"))
 
 
 def process_command(command):
-    arr = command.split(' ')
-    logdir = arr[arr.index('-l') + 1]
+    arr = command.split(" ")
+    logdir = arr[arr.index("-l") + 1]
     if check_exists(logdir):
         sys.stderr.write(f"Skipping {logdir}\n")
         return []
@@ -43,7 +47,7 @@ def process_command(command):
 ns = [0.0, 0.5, 0.8, 0.89]
 seeds = range(42, 47)
 n_samples_grid = [1000, 10000, None]
-device = 'cuda'
+device = "cuda"
 n_epochs = 400
 save_iter = 10000
 vis_iter = 50
@@ -204,7 +208,6 @@ dataset = "mnist"
 # merge_commands(commands, gpu_cnt=10, max_job_cnt=120)
 
 
-
 """ PenalizeLastLayerFixedForm """
 # method = "PenalizeLastLayerFixedForm"
 # Ls = [0.0, 0.01, 0.1, 1.0, 10.0]
@@ -230,15 +233,12 @@ dataset = "mnist"
 # merge_commands(commands)
 
 
-
-
-
 ########################################################################################################################
 ######################                            CIFAR10-error                                   ######################
 ########################################################################################################################
 ns = [0.2, 0.4, 0.6, 0.8]
 seeds = range(42, 43)
-device = 'cuda'
+device = "cuda"
 n_epochs = 400
 save_iter = 10000
 vis_iter = 50
@@ -264,7 +264,6 @@ dataset = "cifar10"
 # # merge_commands(commands, gpu_cnt=10)
 
 
-
 """ PredictGradOutput """
 # method = "PredictGradOutput"
 # stopping_param = 200
@@ -280,7 +279,6 @@ dataset = "cifar10"
 #                 commands += process_command(command)
 #
 # merge_commands(commands, gpu_cnt=10, max_job_cnt=2)
-
 
 
 """ FW """
@@ -327,7 +325,6 @@ dataset = "cifar10"
 #                 commands += process_command(command)
 #
 # merge_commands(commands, gpu_cnt=10, max_job_cnt=2)
-
 
 
 # ########################################################################################################################
@@ -444,7 +441,6 @@ dataset = "cifar10"
 # merge_commands(commands, gpu_cnt=10, max_job_cnt=2)
 
 
-
 ########################################################################################################################
 ######################                                  CIFAR-100                                  #####################
 ########################################################################################################################
@@ -556,7 +552,6 @@ dataset = "cifar10"
 # merge_commands(commands, gpu_cnt=3, max_job_cnt=2000, put_device_id=True)
 
 
-
 ########################################################################################################################
 ######################                          Preventing memorization                            #####################
 ########################################################################################################################
@@ -565,7 +560,7 @@ method = "StandardClassifier"
 # seeds = range(42, 47)
 seeds = range(42, 43)
 ns = [0.8]
-device = 'cuda'
+device = "cuda"
 n_epochs = 400
 save_iter = 10000
 vis_iter = 50

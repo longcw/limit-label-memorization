@@ -13,7 +13,8 @@ import os
 import torch
 
 import matplotlib
-matplotlib.use('agg')
+
+matplotlib.use("agg")
 from matplotlib import pyplot
 
 
@@ -33,7 +34,7 @@ def reconstruction_plot(model, train_data, val_data, n_samples=5, plt=None):
     train_samples = [train_data[i][0] for i in range(n_samples)]
     val_samples = [val_data[i][0] for i in range(n_samples)]
     samples = torch.stack(train_samples + val_samples, dim=0)
-    x_rec = model(inputs=[samples])['x_rec']
+    x_rec = model(inputs=[samples])["x_rec"]
     x_rec = x_rec.reshape(samples.shape)
     samples = revert_normalization(samples, train_data)
     samples = utils.to_numpy(samples)
@@ -47,12 +48,17 @@ def reconstruction_plot(model, train_data, val_data, n_samples=5, plt=None):
     return fig, plt
 
 
-def manifold_plot(model, example_shape, low=-1.0, high=+1.0, n_points=20, d1=0, d2=1, plt=None):
+def manifold_plot(
+    model, example_shape, low=-1.0, high=+1.0, n_points=20, d1=0, d2=1, plt=None
+):
     """Plots reconstruction for varying dimensions d1 and d2, while the remaining dimensions are kept fixed."""
     model.eval()
     if plt is None:
         plt = pyplot
-    image = np.zeros((example_shape[0], n_points * example_shape[1], n_points * example_shape[2]), dtype=np.float32)
+    image = np.zeros(
+        (example_shape[0], n_points * example_shape[1], n_points * example_shape[2]),
+        dtype=np.float32,
+    )
 
     z = np.random.uniform(low=low, high=high, size=(model.hidden_shape[-1],))
     z1_grid = np.linspace(low, high, n_points)
@@ -66,17 +72,21 @@ def manifold_plot(model, example_shape, low=-1.0, high=+1.0, n_points=20, d1=0, 
             cur_z = cur_z.reshape((1, -1))
             x = utils.decode(model, cur_z).reshape(example_shape)
             x = utils.to_numpy(x)
-            image[:, example_shape[1]*i: example_shape[1]*(i+1), example_shape[2]*j:example_shape[2]*(j+1)] = x
+            image[
+                :,
+                example_shape[1] * i : example_shape[1] * (i + 1),
+                example_shape[2] * j : example_shape[2] * (j + 1),
+            ] = x
     fig, ax = plt.subplots(1, figsize=(10, 10))
     if image.shape[0] == 1:
-        ax.imshow(image[0], vmin=0, vmax=1, cmap='gray')
+        ax.imshow(image[0], vmin=0, vmax=1, cmap="gray")
     else:
         image = image.transpose((1, 2, 0))
         image = (255 * image).astype(np.uint8)
         ax.imshow(image)
-    ax.axis('off')
-    ax.set_ylabel('z_{}'.format(d1))
-    ax.set_xlabel('z_{}'.format(d2))
+    ax.axis("off")
+    ax.set_ylabel("z_{}".format(d1))
+    ax.set_xlabel("z_{}".format(d2))
     return fig, plt
 
 
@@ -85,12 +95,22 @@ def latent_scatter(model, data_loader, d1=0, d2=1, plt=None):
     model.eval()
     if plt is None:
         plt = matplotlib.pyplot
-    tab = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple',
-           'tab:brown', 'tab:pink', 'tab:gray', 'tab:olive', 'tab:cyan']
+    tab = [
+        "tab:blue",
+        "tab:orange",
+        "tab:green",
+        "tab:red",
+        "tab:purple",
+        "tab:brown",
+        "tab:pink",
+        "tab:gray",
+        "tab:olive",
+        "tab:cyan",
+    ]
     z = []
     labels = []
     for batch_data, batch_labels in data_loader:
-        z_batch = model(inputs=[batch_data])['z']
+        z_batch = model(inputs=[batch_data])["z"]
         z.append(utils.to_numpy(z_batch))
         labels.append(utils.to_numpy(batch_labels))
     z = np.concatenate(z, axis=0)
@@ -114,8 +134,16 @@ def latent_scatter(model, data_loader, d1=0, d2=1, plt=None):
     labels = [labels[idx] for idx in indices]
 
     for i in np.unique(labels):
-        indices = (labels == i)
-        ax.scatter(z[indices, d1], z[indices, d2], marker='.', color=tab[i], alpha=0.5, edgecolor='', label=i)
+        indices = labels == i
+        ax.scatter(
+            z[indices, d1],
+            z[indices, d2],
+            marker=".",
+            color=tab[i],
+            alpha=0.5,
+            edgecolor="",
+            label=i,
+        )
         legend.append(str(i))
     fig.legend(legend)
     ax.set_xlabel("$Z_{}$".format(d1))
@@ -124,7 +152,7 @@ def latent_scatter(model, data_loader, d1=0, d2=1, plt=None):
     R = np.percentile(z, q=95, axis=0)
     ax.set_xlim(L[d1], R[d1])
     ax.set_ylim(L[d2], R[d2])
-    ax.set_title('Latent space')
+    ax.set_title("Latent space")
     return fig, plt
 
 
@@ -133,12 +161,22 @@ def latent_space_tsne(model, data_loader, plt=None):
     model.eval()
     if plt is None:
         plt = matplotlib.pyplot
-    tab = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple',
-           'tab:brown', 'tab:pink', 'tab:gray', 'tab:olive', 'tab:cyan']
+    tab = [
+        "tab:blue",
+        "tab:orange",
+        "tab:green",
+        "tab:red",
+        "tab:purple",
+        "tab:brown",
+        "tab:pink",
+        "tab:gray",
+        "tab:olive",
+        "tab:cyan",
+    ]
     z = []
     labels = []
     for batch_data, batch_labels in data_loader:
-        z_batch = model(inputs=[batch_data])['z']
+        z_batch = model(inputs=[batch_data])["z"]
         z.append(utils.to_numpy(z_batch))
         labels.append(utils.to_numpy(batch_labels))
     z = np.concatenate(z, axis=0)
@@ -165,24 +203,38 @@ def latent_space_tsne(model, data_loader, plt=None):
     labels = [labels[idx] for idx in indices]
 
     for i in np.unique(labels):
-        indices = (labels == i)
-        ax.scatter(z[indices, 0], z[indices, 1], marker='.', color=tab[i], alpha=0.5, edgecolor='', label=i)
+        indices = labels == i
+        ax.scatter(
+            z[indices, 0],
+            z[indices, 1],
+            marker=".",
+            color=tab[i],
+            alpha=0.5,
+            edgecolor="",
+            label=i,
+        )
         legend.append(str(i))
     fig.legend(legend)
     L = np.percentile(z, q=5, axis=0)
     R = np.percentile(z, q=95, axis=0)
     ax.set_xlim(L[0], R[0])
     ax.set_ylim(L[1], R[1])
-    ax.set_title('Latent space TSNE plot')
+    ax.set_title("Latent space TSNE plot")
     return fig, plt
 
 
-def ce_gradient_norm_histogram(model, data_loader, tensorboard, epoch, name, max_num_examples=5000):
+def ce_gradient_norm_histogram(
+    model, data_loader, tensorboard, epoch, name, max_num_examples=5000
+):
     model.eval()
 
-    pred = utils.apply_on_dataset(model=model, dataset=data_loader.dataset,
-                                  output_keys_regexp='pred', description='grad-histogram:pred',
-                                  max_num_examples=max_num_examples)['pred']
+    pred = utils.apply_on_dataset(
+        model=model,
+        dataset=data_loader.dataset,
+        output_keys_regexp="pred",
+        description="grad-histogram:pred",
+        max_num_examples=max_num_examples,
+    )["pred"]
     n_examples = min(len(data_loader.dataset), max_num_examples)
     labels = []
     for idx in range(n_examples):
@@ -192,7 +244,7 @@ def ce_gradient_norm_histogram(model, data_loader, tensorboard, epoch, name, max
     labels = utils.to_cpu(labels)
 
     grad_wrt_logits = torch.softmax(pred, dim=-1) - labels
-    grad_norms = torch.sum(grad_wrt_logits**2, dim=-1)
+    grad_norms = torch.sum(grad_wrt_logits ** 2, dim=-1)
     grad_norms = utils.to_numpy(grad_norms)
 
     try:
@@ -201,15 +253,20 @@ def ce_gradient_norm_histogram(model, data_loader, tensorboard, epoch, name, max
         print("Tensorboard histogram error: {}".format(e))
 
 
-def ce_gradient_pair_scatter(model, data_loader, d1=0, d2=1, max_num_examples=2000, plt=None):
+def ce_gradient_pair_scatter(
+    model, data_loader, d1=0, d2=1, max_num_examples=2000, plt=None
+):
     if plt is None:
         plt = matplotlib.pyplot
     model.eval()
 
-    pred = utils.apply_on_dataset(model=model, dataset=data_loader.dataset,
-                                  output_keys_regexp='pred',
-                                  max_num_examples=max_num_examples,
-                                  description='grad-pair-scatter:pred')['pred']
+    pred = utils.apply_on_dataset(
+        model=model,
+        dataset=data_loader.dataset,
+        output_keys_regexp="pred",
+        max_num_examples=max_num_examples,
+        description="grad-pair-scatter:pred",
+    )["pred"]
     n_examples = min(len(data_loader.dataset), max_num_examples)
     labels = []
     for idx in range(n_examples):
@@ -228,16 +285,22 @@ def ce_gradient_pair_scatter(model, data_loader, d1=0, d2=1, max_num_examples=20
     # R = np.percentile(grad_wrt_logits, q=95, axis=0)
     # ax.set_xlim(L[d1], R[d1])
     # ax.set_ylim(L[d2], R[d2])
-    ax.set_title('Two coordinates of grad wrt to logits')
+    ax.set_title("Two coordinates of grad wrt to logits")
     return fig, plt
 
 
-def pred_gradient_norm_histogram(model, data_loader, tensorboard, epoch, name, max_num_examples=5000):
+def pred_gradient_norm_histogram(
+    model, data_loader, tensorboard, epoch, name, max_num_examples=5000
+):
     model.eval()
-    grad_pred = utils.apply_on_dataset(model=model, dataset=data_loader.dataset,
-                                       output_keys_regexp='grad_pred', description='grad-histogram:grad_pred',
-                                       max_num_examples=max_num_examples)['grad_pred']
-    grad_norms = torch.sum(grad_pred**2, dim=-1)
+    grad_pred = utils.apply_on_dataset(
+        model=model,
+        dataset=data_loader.dataset,
+        output_keys_regexp="grad_pred",
+        description="grad-histogram:grad_pred",
+        max_num_examples=max_num_examples,
+    )["grad_pred"]
+    grad_norms = torch.sum(grad_pred ** 2, dim=-1)
     grad_norms = utils.to_numpy(grad_norms)
 
     try:
@@ -246,14 +309,19 @@ def pred_gradient_norm_histogram(model, data_loader, tensorboard, epoch, name, m
         print("Tensorboard histogram error: {}".format(e))
 
 
-def pred_gradient_pair_scatter(model, data_loader, d1=0, d2=1, max_num_examples=2000, plt=None):
+def pred_gradient_pair_scatter(
+    model, data_loader, d1=0, d2=1, max_num_examples=2000, plt=None
+):
     if plt is None:
         plt = matplotlib.pyplot
     model.eval()
-    grad_pred = utils.apply_on_dataset(model=model, dataset=data_loader.dataset,
-                                       output_keys_regexp='grad_pred',
-                                       max_num_examples=max_num_examples,
-                                       description='grad-pair-scatter:grad_pred')['grad_pred']
+    grad_pred = utils.apply_on_dataset(
+        model=model,
+        dataset=data_loader.dataset,
+        output_keys_regexp="grad_pred",
+        max_num_examples=max_num_examples,
+        description="grad-pair-scatter:grad_pred",
+    )["grad_pred"]
     grad_pred = utils.to_numpy(grad_pred)
     fig, ax = plt.subplots(1, figsize=(5, 5))
     plt.scatter(grad_pred[:, d1], grad_pred[:, d2])
@@ -263,7 +331,7 @@ def pred_gradient_pair_scatter(model, data_loader, d1=0, d2=1, max_num_examples=
     # R = np.percentile(grad_pred, q=95, axis=0)
     # ax.set_xlim(L[d1], R[d1])
     # ax.set_ylim(L[d2], R[d2])
-    ax.set_title('Two coordinates of grad wrt to logits')
+    ax.set_title("Two coordinates of grad wrt to logits")
     return fig, plt
 
 
@@ -276,8 +344,8 @@ def plot_confusion_matrix(Q, plt=None):
     fig.colorbar(im)
     ax.set_xticks(range(num_classes))
     ax.set_yticks(range(num_classes))
-    ax.set_xlabel('observed')
-    ax.set_ylabel('true')
+    ax.set_xlabel("observed")
+    ax.set_ylabel("true")
     return fig, plt
 
 
@@ -287,10 +355,13 @@ def plot_predictions(model, data_loader, key, plt=None):
     model.eval()
 
     n_examples = 10
-    pred = utils.apply_on_dataset(model=model, dataset=data_loader.dataset,
-                                  output_keys_regexp=key,
-                                  max_num_examples=n_examples,
-                                  description='plot_predictions:{}'.format(key))[key]
+    pred = utils.apply_on_dataset(
+        model=model,
+        dataset=data_loader.dataset,
+        output_keys_regexp=key,
+        max_num_examples=n_examples,
+        description="plot_predictions:{}".format(key),
+    )[key]
     probs = torch.softmax(pred, dim=1)
     probs = utils.to_numpy(probs)
 
@@ -300,11 +371,11 @@ def plot_predictions(model, data_loader, key, plt=None):
     samples = revert_normalization(samples, data_loader.dataset)
     samples = utils.to_numpy(samples)
 
-    fig, ax = plt.subplots(nrows=n_examples, ncols=2, figsize=(2*2, 2*n_examples))
+    fig, ax = plt.subplots(nrows=n_examples, ncols=2, figsize=(2 * 2, 2 * n_examples))
     for i in range(n_examples):
         ax[i][0].imshow(get_image(samples[i]), vmin=0, vmax=1)
         ax[i][0].set_axis_off()
-        ax[i][0].set_title('labels as {}'.format(labels[i]))
+        ax[i][0].set_title("labels as {}".format(labels[i]))
 
         ax[i][1].bar(range(model.num_classes), probs[i])
         ax[i][1].set_xticks(range(model.num_classes))
@@ -314,6 +385,6 @@ def plot_predictions(model, data_loader, key, plt=None):
 
 def savefig(fig, path):
     dir_name = os.path.dirname(path)
-    if dir_name != '':
+    if dir_name != "":
         utils.make_path(dir_name)
     fig.savefig(path)

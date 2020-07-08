@@ -9,6 +9,7 @@ class PretrainedResNet34(torch.nn.Module):
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]).
     Returns activations of the last layer before the fc layer. Output size is 7x7x512.
     """
+
     def __init__(self):
         super(PretrainedResNet34, self).__init__()
         self.resnet = models.resnet34(pretrained=True)
@@ -22,7 +23,7 @@ class PretrainedResNet34(torch.nn.Module):
     def forward(self, x):
         assert 3 % x.shape[1] == 0
         x = x.repeat_interleave(3 // x.shape[1], dim=1)
-        x = F.interpolate(x, size=(224, 224), mode='bilinear')
+        x = F.interpolate(x, size=(224, 224), mode="bilinear")
 
         # ResNet's forward function
         x = self.resnet.conv1(x)
@@ -53,7 +54,7 @@ class PretrainedVAE(torch.nn.Module):
             params[name].requires_grad = False
 
     def forward(self, x):
-        return self.vae.forward(inputs=[x], sampling=False, grad_enabled=True)['z']
+        return self.vae.forward(inputs=[x], sampling=False, grad_enabled=True)["z"]
 
 
 class Identity(torch.nn.Module):
@@ -68,6 +69,6 @@ class Identity(torch.nn.Module):
 def get_pretrained_model(pretrained_arg, input_shape, device):
     if pretrained_arg is None:
         return Identity(input_shape).to(device)
-    if pretrained_arg == 'resnet':
+    if pretrained_arg == "resnet":
         return PretrainedResNet34().to(device)
     return PretrainedVAE(pretrained_arg, device)

@@ -1,9 +1,5 @@
-import sys
+import init_path  # noqa
 import os
-
-this_dir = os.path.abspath(os.path.dirname(__file__))
-sys.path.insert(0, os.path.join(this_dir, ".."))
-
 import methods
 from modules import training, utils, metrics
 import modules.data_utils as datasets

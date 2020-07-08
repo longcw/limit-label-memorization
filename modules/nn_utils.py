@@ -9,7 +9,9 @@ def infer_shape(layers, input_shape):
     input_shape = [x for x in input_shape]
     if input_shape[0] is None:
         input_shape[0] = 4  # should be more than 1, otherwise batch norm will not work
-    x = torch.tensor(np.random.normal(size=input_shape), dtype=torch.float, device='cpu')
+    x = torch.tensor(
+        np.random.normal(size=input_shape), dtype=torch.float, device="cpu"
+    )
     for layer in layers:
         x = layer(x)
     output_shape = list(x.shape)
@@ -19,17 +21,17 @@ def infer_shape(layers, input_shape):
 
 def add_activation(layers, activation):
     """Adds an activation function into a list of layers."""
-    if activation == 'relu':
+    if activation == "relu":
         layers.append(nn.ReLU(inplace=True))
-    if activation == 'sigmoid':
+    if activation == "sigmoid":
         layers.append(nn.Sigmoid())
-    if activation == 'tanh':
+    if activation == "tanh":
         layers.append(nn.Tanh())
-    if activation == 'softplus':
+    if activation == "softplus":
         layers.append(nn.Softplus())
-    if activation == 'softmax':
+    if activation == "softmax":
         layers.append(nn.Softmax(dim=1))
-    if activation == 'linear':
+    if activation == "linear":
         pass
     return layers
 
@@ -42,7 +44,7 @@ class Flatten(nn.Module):
 class Reshape(nn.Module):
     def __init__(self, shape):
         super(Reshape, self).__init__()
-        self._shape = tuple([-1, ] + list(shape))
+        self._shape = tuple([-1,] + list(shape))
 
     def forward(self, x):
         return x.view(self._shape)
@@ -61,44 +63,51 @@ def parse_feed_forward(args, input_shape):
 
     # parse known networks
     if isinstance(args, dict):
-        if args['net'] == 'resnet-cifar10':
+        if args["net"] == "resnet-cifar10":
             from modules.resnet_cifar import ResNet34
+
             net = ResNet34(num_classes=10)
             output_shape = infer_shape([net], input_shape)
             print("output.shape:", output_shape)
             return net, output_shape
-        if args['net'] == 'resnet-cifar100':
+        if args["net"] == "resnet-cifar100":
             from modules.resnet_cifar import ResNet34
+
             net = ResNet34(num_classes=100)
             output_shape = infer_shape([net], input_shape)
             print("output.shape:", output_shape)
             return net, output_shape
-        if args['net'] == 'resnet-clothing1M':
+        if args["net"] == "resnet-clothing1M":
             from torchvision.models import resnet50
+
             net = resnet50(num_classes=14)
             output_shape = infer_shape([net], input_shape)
             print("output.shape:", output_shape)
             return net, output_shape
-        if args['net'] == 'resnet34-clothing1M':
+        if args["net"] == "resnet34-clothing1M":
             from torchvision.models import resnet34
+
             net = resnet34(num_classes=14)
             output_shape = infer_shape([net], input_shape)
             print("output.shape:", output_shape)
             return net, output_shape
-        if args['net'] == 'double-descent-cifar10-resnet18':
+        if args["net"] == "double-descent-cifar10-resnet18":
             from modules.resnet18_double_descent import make_resnet18k
-            net = make_resnet18k(k=args['k'], num_classes=10)
+
+            net = make_resnet18k(k=args["k"], num_classes=10)
             output_shape = infer_shape([net], input_shape)
             print("output.shape:", output_shape)
             return net, output_shape
-        if args['net'] == 'double-descent-cifar100-resnet18':
+        if args["net"] == "double-descent-cifar100-resnet18":
             from modules.resnet18_double_descent import make_resnet18k
-            net = make_resnet18k(k=args['k'], num_classes=100)
+
+            net = make_resnet18k(k=args["k"], num_classes=100)
             output_shape = infer_shape([net], input_shape)
             print("output.shape:", output_shape)
             return net, output_shape
-        if args['net'] == 'resnet34-imagenet':
+        if args["net"] == "resnet34-imagenet":
             from torchvision.models import resnet34
+
             net = resnet34(num_classes=1000)
             output_shape = infer_shape([net], input_shape)
             print("output.shape:", output_shape)
@@ -106,84 +115,86 @@ def parse_feed_forward(args, input_shape):
 
     net = []
     for cur_layer in args:
-        layer_type = cur_layer['type']
+        layer_type = cur_layer["type"]
         prev_shape = infer_shape(net, input_shape)
         print(prev_shape)
 
-        if layer_type == 'fc':
-            dim = cur_layer['dim']
+        if layer_type == "fc":
+            dim = cur_layer["dim"]
             assert len(prev_shape) == 2
             net.append(nn.Linear(prev_shape[1], dim))
-            if cur_layer.get('batch_norm', False):
+            if cur_layer.get("batch_norm", False):
                 net.append(nn.BatchNorm1d(dim))
-            add_activation(net, cur_layer.get('activation', 'linear'))
-            if 'dropout' in cur_layer:
-                net.append(nn.Dropout(cur_layer['dropout']))
+            add_activation(net, cur_layer.get("activation", "linear"))
+            if "dropout" in cur_layer:
+                net.append(nn.Dropout(cur_layer["dropout"]))
 
-        if layer_type == 'flatten':
+        if layer_type == "flatten":
             net.append(Flatten())
 
-        if layer_type == 'reshape':
-            net.append(Reshape(cur_layer['shape']))
+        if layer_type == "reshape":
+            net.append(Reshape(cur_layer["shape"]))
 
-        if layer_type == 'conv':
+        if layer_type == "conv":
             assert len(prev_shape) == 4
-            net.append(nn.Conv2d(
-                in_channels=prev_shape[1],
-                out_channels=cur_layer['filters'],
-                kernel_size=cur_layer['kernel_size'],
-                stride=cur_layer['stride'],
-                padding=cur_layer.get('padding', 0)
-            ))
-            if cur_layer.get('batch_norm', False):
-                net.append(torch.nn.BatchNorm2d(
-                    num_features=cur_layer['filters']))
-            add_activation(net, cur_layer.get('activation', 'linear'))
+            net.append(
+                nn.Conv2d(
+                    in_channels=prev_shape[1],
+                    out_channels=cur_layer["filters"],
+                    kernel_size=cur_layer["kernel_size"],
+                    stride=cur_layer["stride"],
+                    padding=cur_layer.get("padding", 0),
+                )
+            )
+            if cur_layer.get("batch_norm", False):
+                net.append(torch.nn.BatchNorm2d(num_features=cur_layer["filters"]))
+            add_activation(net, cur_layer.get("activation", "linear"))
 
-        if layer_type == 'deconv':
+        if layer_type == "deconv":
             assert len(prev_shape) == 4
-            net.append(nn.ConvTranspose2d(
-                in_channels=prev_shape[1],
-                out_channels=cur_layer['filters'],
-                kernel_size=cur_layer['kernel_size'],
-                stride=cur_layer['stride'],
-                padding=cur_layer.get('padding', 0),
-                output_padding=cur_layer.get('output_padding', 0)
-            ))
-            if cur_layer.get('batch_norm', False):
-                net.append(torch.nn.BatchNorm2d(
-                    num_features=cur_layer['filters']))
-            add_activation(net, cur_layer.get('activation', 'linear'))
+            net.append(
+                nn.ConvTranspose2d(
+                    in_channels=prev_shape[1],
+                    out_channels=cur_layer["filters"],
+                    kernel_size=cur_layer["kernel_size"],
+                    stride=cur_layer["stride"],
+                    padding=cur_layer.get("padding", 0),
+                    output_padding=cur_layer.get("output_padding", 0),
+                )
+            )
+            if cur_layer.get("batch_norm", False):
+                net.append(torch.nn.BatchNorm2d(num_features=cur_layer["filters"]))
+            add_activation(net, cur_layer.get("activation", "linear"))
 
-        if layer_type == 'identity':
+        if layer_type == "identity":
             net.append(Identity())
 
-        if layer_type == 'upsampling':
-            net.append(torch.nn.UpsamplingNearest2d(
-                scale_factor=cur_layer['scale_factor']
-            ))
+        if layer_type == "upsampling":
+            net.append(
+                torch.nn.UpsamplingNearest2d(scale_factor=cur_layer["scale_factor"])
+            )
 
-        if layer_type == 'gaussian':
+        if layer_type == "gaussian":
             # this has to be the last layer
             net = nn.Sequential(*net)
             output_shape = infer_shape(net, input_shape)
-            mu = nn.Sequential(nn.Linear(output_shape[1], cur_layer['dim']))
-            logvar = nn.Sequential(nn.Linear(output_shape[1], cur_layer['dim']))
-            output_shape = [None, cur_layer['dim']]
+            mu = nn.Sequential(nn.Linear(output_shape[1], cur_layer["dim"]))
+            logvar = nn.Sequential(nn.Linear(output_shape[1], cur_layer["dim"]))
+            output_shape = [None, cur_layer["dim"]]
             print("output.shape:", output_shape)
             return ConditionalGaussian(net, mu, logvar), output_shape
 
-        if layer_type == 'uniform':
+        if layer_type == "uniform":
             # this has to be the last layer
             net = nn.Sequential(*net)
             output_shape = infer_shape(net, input_shape)
-            center = nn.Sequential(nn.Linear(output_shape[1], cur_layer['dim']))
-            radius = nn.Sequential(nn.Linear(output_shape[1], cur_layer['dim']))
-            output_shape = [None, cur_layer['dim']]
+            center = nn.Sequential(nn.Linear(output_shape[1], cur_layer["dim"]))
+            radius = nn.Sequential(nn.Linear(output_shape[1], cur_layer["dim"]))
+            output_shape = [None, cur_layer["dim"]]
             print("output.shape:", output_shape)
             return ConditionalUniform(net, center, radius), output_shape
 
-        if layer_type == 'dirac':
+        if layer_type == "dirac":
             # this has to be the last layer
             net = nn.Sequential(*net)
             output_shape = infer_shape(net, input_shape)
@@ -195,7 +206,7 @@ def parse_feed_forward(args, input_shape):
     return nn.Sequential(*net), output_shape
 
 
-def get_grad_replacement_class(sample=False, standard_dev=None, q_dist='Gaussian'):
+def get_grad_replacement_class(sample=False, standard_dev=None, q_dist="Gaussian"):
     if not sample:
         return GradReplacement
 
@@ -209,10 +220,14 @@ def get_grad_replacement_class(sample=False, standard_dev=None, q_dist='Gaussian
         @staticmethod
         def backward(ctx, grad_output):
             grad_wrt_logits = ctx.saved_tensors[0]
-            if q_dist == 'Gaussian':
-                dist = torch.distributions.Normal(loc=grad_wrt_logits, scale=standard_dev)
-            elif q_dist == 'Laplace':
-                dist = torch.distributions.Laplace(loc=grad_wrt_logits, scale=np.sqrt(1.0/2.0)*standard_dev)
+            if q_dist == "Gaussian":
+                dist = torch.distributions.Normal(
+                    loc=grad_wrt_logits, scale=standard_dev
+                )
+            elif q_dist == "Laplace":
+                dist = torch.distributions.Laplace(
+                    loc=grad_wrt_logits, scale=np.sqrt(1.0 / 2.0) * standard_dev
+                )
             else:
                 raise NotImplementedError()
             return dist.sample(), torch.zeros_like(grad_wrt_logits)
@@ -226,6 +241,7 @@ class GradReplacement(torch.autograd.Function):
     of the correct gradient. This class can be used to replace the true
     gradient with a custom one at any location.
     """
+
     @staticmethod
     def forward(ctx, pred, grad_wrt_logits):
         ctx.save_for_backward(grad_wrt_logits)
@@ -237,7 +253,7 @@ class GradReplacement(torch.autograd.Function):
         return grad_wrt_logits, torch.zeros_like(grad_wrt_logits)
 
 
-def get_grad_noise_class(standard_dev=None, q_dist='Gaussian'):
+def get_grad_noise_class(standard_dev=None, q_dist="Gaussian"):
     class GradNoise(torch.autograd.Function):
         @staticmethod
         def forward(ctx, pred):
@@ -245,10 +261,12 @@ def get_grad_noise_class(standard_dev=None, q_dist='Gaussian'):
 
         @staticmethod
         def backward(ctx, grad_output):
-            if q_dist == 'Gaussian':
+            if q_dist == "Gaussian":
                 dist = torch.distributions.Normal(loc=grad_output, scale=standard_dev)
-            elif q_dist == 'Laplace':
-                dist = torch.distributions.Laplace(loc=grad_output, scale=np.sqrt(1.0/2.0)*standard_dev)
+            elif q_dist == "Laplace":
+                dist = torch.distributions.Laplace(
+                    loc=grad_output, scale=np.sqrt(1.0 / 2.0) * standard_dev
+                )
             else:
                 raise NotImplementedError()
             return dist.sample()
@@ -262,9 +280,11 @@ def get_grad_noise_class(standard_dev=None, q_dist='Gaussian'):
 # - mean(params)
 # - kl_divergence
 
+
 class ConditionalGaussian(nn.Module):
     """Conditional Gaussian distribution, where the mean and variance are
     parametrized with neural networks."""
+
     def __init__(self, net, mu, logvar):
         super(ConditionalGaussian, self).__init__()
         self.net = net
@@ -273,19 +293,16 @@ class ConditionalGaussian(nn.Module):
 
     def forward(self, x):
         h = self.net(x)
-        return {
-            'param:mu': self.mu(h),
-            'param:logvar': self.logvar(h)
-        }
+        return {"param:mu": self.mu(h), "param:logvar": self.logvar(h)}
 
     @staticmethod
     def mean(params):
-        return params['param:mu']
+        return params["param:mu"]
 
     @staticmethod
     def sample(params):
-        mu = params['param:mu']
-        logvar = params['param:logvar']
+        mu = params["param:mu"]
+        logvar = params["param:logvar"]
         std = torch.exp(0.5 * logvar)
         eps = torch.randn_like(std)
         return mu + std * eps
@@ -293,14 +310,15 @@ class ConditionalGaussian(nn.Module):
     @staticmethod
     def kl_divergence(params):
         """ Computes KL(q(z|x) || p(z)) assuming p(z) is N(0, I). """
-        mu = params['param:mu']
-        logvar = params['param:logvar']
+        mu = params["param:mu"]
+        logvar = params["param:logvar"]
         kl = -0.5 * torch.sum(1 + logvar - (mu ** 2) - torch.exp(logvar), dim=1)
         return torch.mean(kl, dim=0)
 
 
 class ConditionalUniform(nn.Module):
     """Conditional uniform distribution parametrized with a NN. """
+
     def __init__(self, net, center, radius):
         super(ConditionalUniform, self).__init__()
         self.net = net
@@ -312,26 +330,26 @@ class ConditionalUniform(nn.Module):
         c = torch.tanh(self.center(h))
         r = torch.sigmoid(self.radius(h))
         return {
-            'param:left': torch.clamp(c - r, -1, +1),
-            'param:right': torch.clamp(c + r, -1, +1)
+            "param:left": torch.clamp(c - r, -1, +1),
+            "param:right": torch.clamp(c + r, -1, +1),
         }
 
     @staticmethod
     def mean(params):
-        return 0.5 * (params['param:left'] + params['param:right'])
+        return 0.5 * (params["param:left"] + params["param:right"])
 
     @staticmethod
     def sample(params):
-        left = params['param:left']
-        right = params['param:right']
+        left = params["param:left"]
+        right = params["param:right"]
         eps = torch.rand_like(left)
         return left + (right - left) * eps
 
     @staticmethod
     def kl_divergence(params):
         """ Computes KL(q(z|x) || p(z)) assuming p(z) is U(-1, +1). """
-        left = params['param:left']
-        right = params['param:right']
+        left = params["param:left"]
+        right = params["param:right"]
         kl = torch.sum(torch.log(2.0 / (right - left + 1e-6)), dim=1)
         return torch.mean(kl, dim=0)
 
@@ -339,22 +357,21 @@ class ConditionalUniform(nn.Module):
 class ConditionalDiracDelta(nn.Module):
     """Conditional Dirac delta distribution parametrized with a NN.
     This can be used to make the VAE class act like a regular AE. """
+
     def __init__(self, net):
         super(ConditionalDiracDelta, self).__init__()
         self.net = net
 
     def forward(self, x):
-        return {
-            'param:mu': self.net(x)
-        }
+        return {"param:mu": self.net(x)}
 
     @staticmethod
     def mean(params):
-        return params['param:mu']
+        return params["param:mu"]
 
     @staticmethod
     def sample(params):
-        return params['param:mu']
+        return params["param:mu"]
 
     @staticmethod
     def kl_divergence(params):
