@@ -571,6 +571,70 @@ def load_imagenet_loaders(
     return train_loader, val_loader, test_loader
 
 
+def load_cover_loaders(args):
+    from modules.cover_dataset import CoverDataset
+
+    statistics = ((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
+    train_sampler = None
+
+    train_set = CoverDataset(
+        args.image_root,
+        args.label,
+        "train",
+        transforms.Compose(
+            [
+                transforms.Resize((256, 128)),
+                # transforms.RandomResizedCrop(224),
+                # transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+            ]
+        ),
+        add_blank=3,
+        statistics=statistics,
+    )
+    val_set = CoverDataset(
+        args.image_root,
+        args.label,
+        "test",
+        transforms.Compose(
+            [
+                transforms.Resize((256, 128)),
+                # transforms.Resize(256),
+                # transforms.CenterCrop(224),
+                transforms.ToTensor(),
+            ]
+        ),
+        statistics=statistics,
+    )
+
+    train_loader = torch.utils.data.DataLoader(
+        train_set,
+        batch_size=args.batch_size,
+        shuffle=(train_sampler is None),
+        num_workers=4,
+        pin_memory=True,
+        sampler=train_sampler,
+    )
+
+    val_loader = torch.utils.data.DataLoader(
+        val_set,
+        batch_size=args.batch_size,
+        shuffle=False,
+        num_workers=4,
+        pin_memory=True,
+    )
+
+    test_loader = torch.utils.data.DataLoader(
+        val_set,
+        batch_size=args.batch_size,
+        shuffle=False,
+        num_workers=4,
+        pin_memory=True,
+    )
+
+    return train_loader, val_loader, test_loader
+
+
 def load_data_from_arguments(args):
     """ Helper method for loading data from arguments.
     """
@@ -637,6 +701,9 @@ def load_data_from_arguments(args):
             data_augmentation=args.data_augmentation,
             seed=args.seed,
         )
+
+    if args.dataset == "cover":
+        train_loader, val_loader, test_loader = load_cover_loaders(args)
 
     example_shape = train_loader.dataset[0][0].shape
     print(

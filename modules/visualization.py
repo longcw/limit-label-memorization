@@ -365,8 +365,13 @@ def plot_predictions(model, data_loader, key, plt=None):
     probs = torch.softmax(pred, dim=1)
     probs = utils.to_numpy(probs)
 
-    data = [data_loader.dataset[i][0] for i in range(n_examples)]
-    labels = [data_loader.dataset[i][1] for i in range(n_examples)]
+    batch = [data_loader.dataset[i] for i in range(n_examples)]
+    data = [sample[0] for sample in batch]
+    labels = [sample[1] for sample in batch]
+    if len(data) > 0 and data[0].dim() > 3:
+        # N, 3, H, W -> 3, H, N * W
+        data = [torch.cat(tuple(sample), 2) for sample in data]
+
     samples = torch.stack(data, dim=0)
     samples = revert_normalization(samples, data_loader.dataset)
     samples = utils.to_numpy(samples)

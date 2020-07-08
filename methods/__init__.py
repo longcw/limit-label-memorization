@@ -7,3 +7,5 @@ from methods.predict import (
     PredictGradOutputGeneralFormUseLabel,
 )
 from methods.vae import VAE
+
+from methods.cover_model.cover_model import CoverModel

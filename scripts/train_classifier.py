@@ -11,7 +11,7 @@ import json
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", "-c", type=str, required=True)
+    parser.add_argument("--config", "-c", type=str, default=None)
     parser.add_argument("--device", "-d", default="cuda")
 
     parser.add_argument("--batch_size", "-b", type=int, default=256)
@@ -27,8 +27,10 @@ def main():
         "-D",
         type=str,
         default="mnist",
-        choices=["mnist", "cifar10", "cifar100", "clothing1m", "imagenet"],
+        choices=["mnist", "cifar10", "cifar100", "clothing1m", "imagenet", "cover"],
     )
+    parser.add_argument("--image-root", metavar="DIR", help="path to images")
+    parser.add_argument("--label", metavar="DIR", help="path to label file")
     parser.add_argument(
         "--data_augmentation", "-A", action="store_true", dest="data_augmentation"
     )
@@ -117,30 +119,49 @@ def main():
     #     }
     # }
 
-    with open(args.config, "r") as f:
-        architecture_args = json.load(f)
-
     model_class = getattr(methods, args.model_class)
 
-    model = model_class(
-        input_shape=train_loader.dataset[0][0].shape,
-        architecture_args=architecture_args,
-        pretrained_arg=args.pretrained_arg,
-        device=args.device,
-        grad_weight_decay=args.grad_weight_decay,
-        grad_l1_penalty=args.grad_l1_penalty,
-        lamb=args.lamb,
-        sample_from_q=args.sample_from_q,
-        q_dist=args.q_dist,
-        load_from=args.load_from,
-        loss_function=args.loss_function,
-        loss_function_param=args.loss_function_param,
-        add_noise=args.add_noise,
-        noise_type=args.noise_type,
-        noise_std=args.noise_std,
-        detach=args.detach,
-        warm_up=args.warm_up,
-    )
+    if args.model_class == "CoverModel":
+        model = model_class(
+            num_classes=2,
+            pretrained=True,
+            device=args.device,
+            grad_weight_decay=args.grad_weight_decay,
+            grad_l1_penalty=args.grad_l1_penalty,
+            lamb=args.lamb,
+            sample_from_q=args.sample_from_q,
+            q_dist=args.q_dist,
+            load_from=args.load_from,
+            loss_function=args.loss_function,
+            loss_function_param=args.loss_function_param,
+            add_noise=args.add_noise,
+            noise_type=args.noise_type,
+            noise_std=args.noise_std,
+            detach=args.detach,
+            warm_up=args.warm_up,
+        )
+    else:
+        with open(args.config, "r") as f:
+            architecture_args = json.load(f)
+        model = model_class(
+            input_shape=train_loader.dataset[0][0].shape,
+            architecture_args=architecture_args,
+            pretrained_arg=args.pretrained_arg,
+            device=args.device,
+            grad_weight_decay=args.grad_weight_decay,
+            grad_l1_penalty=args.grad_l1_penalty,
+            lamb=args.lamb,
+            sample_from_q=args.sample_from_q,
+            q_dist=args.q_dist,
+            load_from=args.load_from,
+            loss_function=args.loss_function,
+            loss_function_param=args.loss_function_param,
+            add_noise=args.add_noise,
+            noise_type=args.noise_type,
+            noise_std=args.noise_std,
+            detach=args.detach,
+            warm_up=args.warm_up,
+        )
 
     metrics_list = []
     if args.dataset == "imagenet":
