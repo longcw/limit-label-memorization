@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from methods import BaseClassifier
+from modules import visualization as vis
 from typing import List
 
 from . import resnet
@@ -39,7 +40,7 @@ class CoverModel(BaseClassifier):
             "noise_std": noise_std,
             "loss_function_param": loss_function_param,
             "load_from": load_from,
-            "class": "StandardClassifier",
+            "class": "CoverModel",
         }
 
         self.device = device
@@ -126,3 +127,17 @@ class CoverModel(BaseClassifier):
         }
 
         return batch_losses, info
+
+    def visualize(
+        self, train_loader, val_loader, tensorboard=None, epoch=None, **kwargs
+    ):
+        visualizations = {}
+
+        # visualize pred
+        fig, _ = vis.plot_predictions(self, train_loader, key="pred")
+        visualizations["predictions/pred-train"] = fig
+        if val_loader is not None:
+            fig, _ = vis.plot_predictions(self, val_loader, key="pred")
+            visualizations["predictions/pred-val"] = fig
+
+        return visualizations

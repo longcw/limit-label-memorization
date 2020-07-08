@@ -105,7 +105,8 @@ def main():
 
     # Options
     optimization_args = {
-        "optimizer": {"name": "adam", "lr": args.lr, "weight_decay": args.weight_decay}
+        "optimizer": {"name": "adam", "lr": args.lr, "weight_decay": args.weight_decay},
+        "scheduler": {"step_size": 20, "gamma": 0.3},
     }
 
     # optimization_args = {

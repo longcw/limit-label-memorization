@@ -56,7 +56,7 @@ def save(model, path, optimizer=None, scheduler=None):
     torch.save(save_dict, path)
 
 
-def load(path, device=None, verbose=False, remove_load_from=False):
+def load(path, device=None, verbose=False, remove_load_from=False, model=None):
     print("Loading the model from {}".format(path))
     saved_dict = torch.load(path, map_location=device)
     args = saved_dict["args"]
@@ -66,8 +66,9 @@ def load(path, device=None, verbose=False, remove_load_from=False):
     if remove_load_from and ("load_from" in args):
         args["load_from"] = None
 
-    model_class = getattr(methods, args["class"])
-    model = model_class(**args)
+    if model is None:
+        model_class = getattr(methods, args["class"])
+        model = model_class(**args)
 
     if verbose:
         print(model)
