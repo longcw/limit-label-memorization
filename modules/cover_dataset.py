@@ -83,7 +83,7 @@ class CoverDataset(Dataset):
         labels, image_names = read_and_merge_datasets(image_roots, label_files)
         self.image_names = image_names
 
-        split = int(len(labels) * 0.7)
+        split = int(len(labels) * 0.8)
         np.random.seed(1234)
         np.random.shuffle(labels)
         if subset == "train":
@@ -126,8 +126,7 @@ class CoverDataset(Dataset):
 
         # read images
         images = []  # type: List[torch.Tensor]
-        for name in image_names:
-            fullname = os.path.join(self.image_root, name)
+        for fullname in image_names:
             image = self.image_loader(fullname)
             if self.transform:
                 image = self.transform(image)
