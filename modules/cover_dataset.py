@@ -11,21 +11,66 @@ from torchvision.datasets.folder import default_loader
 from PIL import Image
 
 
+def get_valid_videos(image_root):
+    valid_names = {}
+    for name in os.listdir(image_root):
+        sub_root = os.path.join(image_root, name)
+        if not os.path.isdir(sub_root):
+            continue
+        image_files = glob.glob(os.path.join(sub_root, "*.jpg"))
+        if len(image_files) != 10:
+            continue
+        sorted(
+            image_files,
+            key=lambda name: int(os.path.splitext(os.path.basename(name))[0]),
+        )
+        valid_names[name] = image_files
+    return valid_names
+
+
+def read_and_merge_datasets(image_roots, label_files):
+    all_label_data = []
+    valid_videos = {}
+    for image_root, label_file in zip(image_roots, label_files):
+        all_label_data.append(pd.read_csv(label_file))
+        valid_videos.update(get_valid_videos(image_root))
+    df = pd.concat(all_label_data, axis=0, ignore_index=True)
+
+    # filter based on impr_cnt
+    impr_cnt = np.asarray(df["impr_cnt"], dtype=int)
+    df = df[impr_cnt >= 10]
+
+    label_names = ["click_ratio", "like_ratio", "play_finish_ratio"]
+    labels = np.zeros([len(df), len(label_names)], dtype=int)
+    for i, name in enumerate(label_names):
+        threshold = np.median(df[name])
+        labels[:, i] = df[name] > threshold
+
+    # filter based on image
+    valid_labels = []
+    for vid, label in zip(df["vid"], labels):
+        if vid in valid_videos:
+            valid_labels.append((vid, label))
+
+    # sort by vid
+    sorted(valid_labels, key=lambda item: item[0])
+
+    return valid_labels, valid_videos
+
+
 class CoverDataset(Dataset):
     def __init__(
         self,
-        image_root,
-        label_file,
+        image_roots,
+        label_files,
         subset="train",
         tranform=None,
         image_loader=default_loader,
         add_blank=0,
         statistics=((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
     ):
-        self.image_root = image_root
         self.transform = tranform
         self.image_loader = image_loader
-        self.label_file = label_file
         self.add_blank = add_blank
         self.statistics = (torch.Tensor(statistics[0]), torch.Tensor(statistics[1]))
 
@@ -35,7 +80,7 @@ class CoverDataset(Dataset):
         else:
             self.transform = norm
 
-        labels, image_names = self.gen_labels()
+        labels, image_names = read_and_merge_datasets(image_roots, label_files)
         self.image_names = image_names
 
         split = int(len(labels) * 0.7)
@@ -98,47 +143,3 @@ class CoverDataset(Dataset):
 
         label = np.asarray([0, 0, 0], dtype=int)
         return [image] * 10, label
-
-    def gen_labels(self):
-        df = pd.read_csv(self.label_file)
-
-        # filter based on impr_cnt
-        impr_cnt = np.asarray(df["impr_cnt"], dtype=int)
-        df = df[impr_cnt >= 10]
-
-        label_names = ["click_ratio", "like_ratio", "play_finish_ratio"]
-        labels = np.zeros([len(df), len(label_names)], dtype=int)
-        for i, name in enumerate(label_names):
-            threshold = np.median(df[name])
-            labels[:, i] = df[name] > threshold
-
-        # filter based on image
-        valid_labels = []
-        valid_videos = self.get_valid_videos(self.image_root)
-        for vid, label in zip(df["vid"], labels):
-            if vid in valid_videos:
-                valid_labels.append((vid, label))
-
-        # sort by vid
-        sorted(valid_labels, key=lambda item: item[0])
-
-        return valid_labels, valid_videos
-
-    @staticmethod
-    def get_valid_videos(image_root):
-        valid_names = {}
-        for name in os.listdir(image_root):
-            sub_root = os.path.join(image_root, name)
-            if not os.path.isdir(sub_root):
-                continue
-            image_files = glob.glob(os.path.join(sub_root, "*.jpg"))
-            if len(image_files) != 10:
-                continue
-            sorted(
-                image_files,
-                key=lambda name: int(os.path.splitext(os.path.basename(name))[0]),
-            )
-            valid_names[name] = [
-                os.path.relpath(filename, image_root) for filename in image_files
-            ]
-        return valid_names

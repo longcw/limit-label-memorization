@@ -29,8 +29,8 @@ def main():
         default="mnist",
         choices=["mnist", "cifar10", "cifar100", "clothing1m", "imagenet", "cover"],
     )
-    parser.add_argument("--image-root", metavar="DIR", help="path to images")
-    parser.add_argument("--label", metavar="DIR", help="path to label file")
+    # parser.add_argument("--image-root", metavar="DIR", help="path to images")
+    # parser.add_argument("--label", metavar="DIR", help="path to label file")
     parser.add_argument(
         "--data_augmentation", "-A", action="store_true", dest="data_augmentation"
     )
@@ -101,6 +101,18 @@ def main():
     print(args)
 
     # Load data
+    args.image_root = [
+        "/data/chenlong.1024/5198852-tiktok-1w_images",
+        "/data/chenlong.1024/5205046-tiktok-10w_images",
+        "/data/chenlong.1024/5599074-tiktok-impr_cnt20_images",
+        "/data/chenlong.1024/5600297-tiktok-impr_cnt10_images",
+    ]
+    args.label = [
+        "/data/chenlong.1024/5198852-tiktok-1w.csv",
+        "/data/chenlong.1024/5205046-tiktok-10w.csv",
+        "/data/chenlong.1024/5599074-tiktok-impr_cnt20.csv",
+        "/data/chenlong.1024/5600297-tiktok-impr_cnt10.csv",
+    ]
     train_loader, val_loader, test_loader = datasets.load_data_from_arguments(args)
 
     # Options
