@@ -585,7 +585,7 @@ def load_cover_loaders(args):
             [
                 transforms.Resize((256, 128)),
                 # transforms.RandomResizedCrop(224),
-                # transforms.RandomHorizontalFlip(),
+                transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
             ]
         ),
@@ -611,7 +611,7 @@ def load_cover_loaders(args):
         train_set,
         batch_size=args.batch_size,
         shuffle=(train_sampler is None),
-        num_workers=4,
+        num_workers=8,
         pin_memory=True,
         sampler=train_sampler,
     )
@@ -620,7 +620,7 @@ def load_cover_loaders(args):
         val_set,
         batch_size=args.batch_size,
         shuffle=False,
-        num_workers=4,
+        num_workers=8,
         pin_memory=True,
     )
 
