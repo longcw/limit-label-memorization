@@ -20,7 +20,7 @@ def get_valid_videos(image_root):
         image_files = glob.glob(os.path.join(sub_root, "*.jpg"))
         if len(image_files) != 10:
             continue
-        sorted(
+        image_files = sorted(
             image_files,
             key=lambda name: int(os.path.splitext(os.path.basename(name))[0]),
         )
@@ -53,7 +53,7 @@ def read_and_merge_datasets(image_roots, label_files):
             valid_labels.append((vid, label))
 
     # sort by vid
-    sorted(valid_labels, key=lambda item: item[0])
+    valid_labels = sorted(valid_labels, key=lambda item: item[0])
 
     return valid_labels, valid_videos
 
