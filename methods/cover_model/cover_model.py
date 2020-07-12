@@ -60,8 +60,8 @@ class CoverModel(BaseClassifier):
                 "fc": nn.Linear(feaure_channels, num_classes, bias=False),
             }
         )
-
         self.classifier = self.classifier.to(self.device)
+
         self.grad_noise_class = nn_utils.get_grad_noise_class(
             standard_dev=noise_std, q_dist=noise_type
         )

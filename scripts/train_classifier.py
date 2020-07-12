@@ -134,7 +134,7 @@ def main():
 
     model_class = getattr(methods, args.model_class)
 
-    if args.model_class == "CoverModel":
+    if "CoverModel" in args.model_class:
         model = model_class(
             num_classes=2,
             pretrained=True,
