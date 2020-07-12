@@ -94,8 +94,8 @@ class CoverModelPredGrad(PredictGradBaseClassifier):
         # q net
         self.q_network = nn.ModuleDict(
             {
-                "backbone": resnet.resnet34(pretrained),
-                "fc": nn.Linear(feaure_channels, num_classes, bias=False),
+                "backbone": resnet.resnet34(pretrained=False),
+                "fc": nn.Linear(512, num_classes, bias=False),
             }
         )
         self.q_network = self.q_network.to(self.device)
