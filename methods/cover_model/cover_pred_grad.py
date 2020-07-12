@@ -92,10 +92,11 @@ class CoverModelPredGrad(PredictGradBaseClassifier):
         self.num_classes = num_classes
 
         # q net
-        q_network = {"net": "resnet34-imagenet"}
-        input_shape = [None, 3, 256, 128]
-        self.q_network, _ = nn_utils.parse_feed_forward(
-            args=q_network, input_shape=input_shape
+        self.q_network = nn.ModuleDict(
+            {
+                "backbone": resnet.resnet34(pretrained),
+                "fc": nn.Linear(feaure_channels, num_classes, bias=False),
+            }
         )
         self.q_network = self.q_network.to(self.device)
 
@@ -114,24 +115,29 @@ class CoverModelPredGrad(PredictGradBaseClassifier):
                 torch.nn.Linear(128, self.num_classes),
             ).to(self.device)
 
-    def forward(self, inputs, grad_enabled=False, **kwargs):
-        torch.set_grad_enabled(grad_enabled)
-
-        # frame: [N, 10, 3, H, W]
-        frames = inputs[0].to(self.device)
+    @staticmethod
+    def _forward(model, frames):
         batch_size, num_frames = frames.shape[:2]
         x = frames.view(batch_size * num_frames, *frames.shape[2:])
-        feat = self.classifier["backbone"](x)  # batch_size * num_frames, C, h, w
+        feat = model["backbone"](x)  # batch_size * num_frames, C, h, w
         fvec = F.adaptive_avg_pool2d(feat, (1, 1)).view(batch_size * num_frames, -1)
         # fvec = self.bn_vec(fvec)
 
         # fvec = torch.flatten(fvec, 1)  # batch_size * num_frames, C
         fvec = fvec.view(batch_size, num_frames, -1)
         fvec = fvec.mean(1)  # batch_size , C
-        pred = self.classifier["fc"](fvec)
+        pred = model["fc"](fvec)
+        return pred
+
+    def forward(self, inputs, grad_enabled=False, **kwargs):
+        torch.set_grad_enabled(grad_enabled)
+
+        # frame: [N, 10, 3, H, W]
+        frames = inputs[0].to(self.device)
+        pred = self._forward(self.classifier, frames)
 
         # predict the gradient wrt to logits
-        q_label_pred = self.q_network(x)
+        q_label_pred = self._forward(self.q_network, frames)
         q_label_pred_softmax = torch.softmax(q_label_pred, dim=1)
         if self.detach:
             # NOTE: we detach here too, so that the classifier is trained using the predicted gradient only
